@@ -11,32 +11,54 @@ def index():
 
 @app.route('/peleas', methods=['GET'])
 def peleas():
-    peleas_list = get_all_peleas() 
-    return render_template('peleas.html', peleas=peleas_list)
+    peleas_list = get_all_peleas()
+    peleadores_list = get_all_peleadores()   
+    return render_template('peleas.html', peleas=peleas_list, peleadores=peleadores_list)
+
+
 
 @app.route('/peleas', methods=['POST'])
 def save_peleas():
     data = request.get_json()
-    p = Peleas(peleador1_id = data['peleador1_id'], peleador2_id = data['peleador2_id'], fecha= data['fecha'], ubicacion= data['ubicacion'], estado= data['estado'], ganador= data['ganador'])
+
+    estado = data.get('estado')
+    if not estado:   # '', None, etc.
+        estado = 'pendiente'
+
+    p = Peleas(
+        peleador1_id=data['peleador1_id'],
+        peleador2_id=data['peleador2_id'],
+        fecha=data['fecha'],
+        ubicacion=data['ubicacion'],
+        estado=estado,
+        ganador=data['ganador']
+    )
+
     id = p.save()
-    success = id is not None 
+    success = id is not None
     return jsonify(success), 201
+
 
 @app.route('/peleas/<int:id>', methods=['PUT'])
 def update_peleas(id):
     data = request.get_json()
-    peleador1_id = data.get('peleador1_id')
-    peleador2_id = data.get('peleador2_id')
-    fecha = data.get('fecha')
-    ubicacion = data.get('ubicacion')
+
     estado = data.get('estado')
-    ganador = data.get('ganador')
+    if not estado:
+        estado = 'pendiente'
 
     p = Peleas(id=id)
-    p.update(peleador1_id, peleador2_id, fecha, ubicacion, estado, ganador)
-    success = p.update(peleador1_id, peleador2_id, fecha, ubicacion, estado, ganador)
-    
-    return jsonify(success = success), (200 if success else 404)
+    success = p.update(
+        data.get('peleador1_id'),
+        data.get('peleador2_id'),
+        data.get('fecha'),
+        data.get('ubicacion'),
+        estado,
+        data.get('ganador')
+    )
+
+    return jsonify(success=success), (200 if success else 404)
+
 
 @app.route('/peleas/<int:id>' , methods=['DELETE'])
 def delete_peleas(id):

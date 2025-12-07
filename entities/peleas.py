@@ -10,8 +10,8 @@ class Peleas(Base):
     peleador2_id = Column(Integer, nullable=False)
     fecha = Column(DateTime, nullable=False)
     ubicacion = Column(String(150), nullable=False)
-    estado = Column(String(20), nullable=False)
-    ganador = Column(Integer, nullable=False)
+    estado = Column(String(20))
+    ganador = Column(Integer)
 
     def save(self):
         session = SessionLocal()

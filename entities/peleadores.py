@@ -11,7 +11,7 @@ class Peleadores(Base):
     edad = Column(Integer, nullable=False)
     ubicacion = Column(String(150), nullable=False)
     nivel_pelea = Column(Integer, nullable=False)
-    foto = Column(String(255), nullable=False)
+    foto = Column(String(255))
     descripcion = Column(String(255), nullable=False)
 
     def save(self):
