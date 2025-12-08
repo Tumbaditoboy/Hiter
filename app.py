@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, jsonify
-
 from entities.peleas import Peleas, get_all as get_all_peleas
 from entities.peleadores import Peleadores, get_all as get_all_peleadores
+from sqlalchemy import func
+from persistence.db import SessionLocal
+from entities.peleadores import Peleadores
+from entities.peleas import Peleas
 
 app = Flask(__name__)
 
@@ -15,6 +18,36 @@ def peleas():
     peleadores_list = get_all_peleadores()   
     return render_template('peleas.html', peleas=peleas_list, peleadores=peleadores_list)
 
+@app.route('/clasificacion', methods=['GET'])
+def clasificacion():
+    session = SessionLocal()
+    try:
+        results = (
+            session.query(Peleas.ganador, func.count(Peleas.id).label('victorias'))
+            .filter(Peleas.ganador != None)
+            .group_by(Peleas.ganador)
+            .order_by(func.count(Peleas.id).desc())
+            .all()
+        )
+
+        clasif = []
+        for ganador_id, victorias in results:
+            peleador = session.get(Peleadores, ganador_id)
+            clasif.append({
+                "peleador_id": ganador_id,
+                "alias": peleador.alias if peleador else "N/A",
+                "nombre": peleador.nombre if peleador else "",
+                "victorias": victorias,
+                "foto": peleador.foto if peleador and getattr(peleador, "foto", None) else None
+            })
+
+        # mi bombooo
+        top_foto = clasif[0]["foto"] if len(clasif) > 0 and clasif[0].get("foto") else None
+
+        return render_template('clasificacion.html', clasificacion=clasif, top_foto=top_foto)
+    finally:
+        session.close()
+
 
 
 @app.route('/peleas', methods=['POST'])
@@ -22,7 +55,7 @@ def save_peleas():
     data = request.get_json()
 
     estado = data.get('estado')
-    if not estado:   # '', None, etc.
+    if not estado:   
         estado = 'pendiente'
 
     p = Peleas(
@@ -66,7 +99,7 @@ def delete_peleas(id):
     success = p.delete()
     return jsonify(success = success), (200 if success else 404)
 
-#Aki van ahora los del customer 
+
 @app.route('/peleadores', methods=['GET'])
 def peleadores():
     peleadores_list = get_all_peleadores() 
@@ -102,6 +135,8 @@ def delete_peleadores(id):
     p = Peleadores(id=id)
     success = p.delete()
     return jsonify(success = success), (200 if success else 404)
+
+
 
 if __name__ == '__main__':
     app.run()
