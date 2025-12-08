@@ -99,7 +99,7 @@ def delete_peleas(id):
     success = p.delete()
     return jsonify(success = success), (200 if success else 404)
 
-
+#Akiteba
 @app.route('/peleadores', methods=['GET'])
 def peleadores():
     peleadores_list = get_all_peleadores() 
